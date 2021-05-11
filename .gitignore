@@ -1,0 +1,4 @@
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+Modeling/Bert.ipynb
+Modeling/KoElectra.ipynb
