@@ -76,7 +76,6 @@ def login():
 
 
 @app.route('/api/v1/hotels', methods=['GET'])
-@jwt_required()
 def get_hotel():
     hotels = db.hotel
     output = []
