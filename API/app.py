@@ -80,13 +80,23 @@ def login():
 
 @app.route('/api/v1/hotels', methods=['GET'])
 def get_hotel():
+    region = request.args.get("region", "all", str)
+
     hotels = db.hotel
     output = []
-    for h in list(hotels.find()):
-        output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id']})
 
-    return jsonify({'result':output})
+    if region == 'all':
 
+        for h in list(hotels.find()):
+            output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id']})
+
+        return jsonify({'result':output})
+
+    else:
+        for h in list(hotels.find({'$text':{'$search':region}})):
+            output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id']})
+
+        return jsonify({'result':output})
 
 
 @app.route('/api/v1/hotels/recommended', methods=['GET'])
@@ -154,7 +164,7 @@ def get_review(hotelid):
                         keyword_reviews = {'id':r['reviewID'], 'content':r['content']}
                         review_content.append(keyword_reviews)
                         review_ids.append(r['reviewID'])
-                    
+                
         keyword_info['pos'] = pos_count
         keyword_info['neg'] = neg_count
         keyword_info['reviews'] = review_content
@@ -171,4 +181,4 @@ def get_review(hotelid):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
