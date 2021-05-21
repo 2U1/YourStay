@@ -112,12 +112,52 @@ def recommend_hotel():
     return jsonify({'result':recommended})
     
 
-# @app.route('/api/v1/hotels/reviews/<int:hotelid>', methods=['GET'])
-# @jwt_required()
-# def get_review(hotelid):
-#     tokenized = db.tokenized_review
-#     output = []
-#     info = tokenized.find({'hotel_id':hotelid})
+@app.route('/api/v1/hotels/reviews/<int:hotelid>', methods=['GET'])
+def get_review(hotelid):
+    reviews = db.tokenized_review
+    hotel = db.hotel
+    keyword = db.keyword
+
+    hotel_doc = hotel.find_one({'hotel_id':hotelid})
+    del hotel_doc['_id']
+
+    keyword_doc = keyword.find({'hotel_id':hotelid})
+
+    keyword_output = []
+
+    for k in keyword_doc:
+        keyword_info = {'rep':k['rep']}
+
+        k_list = k['keywords']
+
+        review_content = []
+        review_ids = []
+
+        pos_count = 0
+        neg_count = 0
+
+        for w in k_list:
+            for r in reviews.find({'hotel_id':hotelid,'tokens':w}):
+                if r['label'] == 0:
+                    neg_count += 1
+                elif r['label'] == 1:
+                    pos_count += 1
+
+                if r['reviewID'] not in review_ids:
+                    keyword_reviews = {'id':r['reviewID'], 'content':r['content']}
+                    review_content.append(keyword_reviews)
+                    review_ids.append(r['reviewID'])
+                    
+        keyword_info['pos'] = pos_count
+        keyword_info['neg'] = neg_count
+        keyword_info['reviews'] = review_content
+
+
+        keyword_output.append(keyword_info)
+
+    return jsonify({'hotel':hotel_doc, 'review':keyword_output})
+
+    
 
 
 if __name__ == "__main__":
