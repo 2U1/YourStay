@@ -82,7 +82,7 @@ def login():
 def get_hotel():
     hotels = db.hotel
     output = []
-    for h in hotels.find():
+    for h in list(hotels.find()):
         output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id']})
 
     return jsonify({'result':output})
@@ -124,9 +124,9 @@ def get_review(hotelid):
     hotel_doc = hotel.find_one({'hotel_id':hotelid})
     del hotel_doc['_id']
 
-    keyword_doc = keyword.find({'hotel_id':hotelid})
+    keyword_doc = list(keyword.find({'hotel_id':hotelid}))
 
-    review_doc = reviews.find({'hotel_id':hotelid})
+    review_doc = list(reviews.find({'hotel_id':hotelid}))
 
     keyword_output = []
 
@@ -162,8 +162,8 @@ def get_review(hotelid):
 
         keyword_output.append(keyword_info)
 
-    keyword_output_neg = sorted(keyword_output, key = itemgetter('neg'), reverse=True)[0:5]
-    keyword_output_pos = sorted(keyword_output, key = itemgetter('pos'), reverse=True)[0:5]
+    keyword_output_neg = sorted(keyword_output, key = itemgetter('neg'), reverse=True)[0:3]
+    keyword_output_pos = sorted(keyword_output, key = itemgetter('pos'), reverse=True)[0:3]
 
     return jsonify({'hotel':hotel_doc, 'pos_review':keyword_output_pos, 'neg_review':keyword_output_neg})
 
