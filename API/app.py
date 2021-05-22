@@ -88,13 +88,17 @@ def get_hotel():
     if region == 'all':
 
         for h in list(hotels.find()):
-            output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id']})
+            del h['_id']
+            output.append(h)
+            # output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id'], 'image':h['url']})
 
         return jsonify({'result':output})
 
     else:
         for h in list(hotels.find({'$text':{'$search':region}})):
-            output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id']})
+            del h['_id']
+            output.append(h)
+            # output.append({'name':h['hotelName'], 'cleanliness':h['cleanliness'], 'convenience':h['convenience'], 'kindness': h['kindness'], 'position':h['position'], 'score':h['totalScore'], 'id':h['hotel_id'], 'image':h['url']})
 
         return jsonify({'result':output})
 
