@@ -8,22 +8,29 @@ from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt, generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 from operator import itemgetter
+from flask_cors import CORS, cross_origin
 
 
 app = Flask(__name__)
 
 app.config['MONGO_URI'] = 'mongodb+srv://NLP:likelion@likelion.hppms.mongodb.net/NLP'
 app.config["JWT_SECRET_KEY"] = "YourStay"
+app.config["CORS_HEADERS"] = 'Content-Type'
 # app.config['MONGO_DBNAME'] = 'NLP'
 
 mongo = PyMongo(app)
 bcrpyt = Bcrypt(app)
 jwt = JWTManager(app)
+CORS(app, resources={r'/*':{'origins':'*'}})
 
 db = mongo.db
 
+# def build_actual_response(response):
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     return response
 
 @app.route('/api/v1/register', methods=['POST'])
+@cross_origin(origin='*')
 def register():
     user_id = request.form['userid']
     user_name = request.form['username']
@@ -50,6 +57,7 @@ def register():
 
 
 @app.route('/api/v1/login', methods=['POST'])
+@cross_origin(origin='*')
 def login():
     if request.is_json:
         user_id = request.json['userid']
