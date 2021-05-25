@@ -1,36 +1,37 @@
 from os import access
 import bcrypt
 from dns import message
-from flask import Flask, request, Response, jsonify, redirect, url_for
+from flask import Flask, request, Response, jsonify, redirect, url_for, make_response
 import json
-from flask_jwt_extended.utils import get_jwt_identity
+from flask_jwt_extended.utils import get_jwt_identity, set_access_cookies, set_refresh_cookies
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt, generate_password_hash, check_password_hash
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, create_refresh_token
 from operator import itemgetter
 from flask_cors import CORS, cross_origin
+from werkzeug.datastructures import Headers
 
 
 app = Flask(__name__)
 
 app.config['MONGO_URI'] = 'mongodb+srv://NLP:likelion@likelion.hppms.mongodb.net/NLP'
 app.config["JWT_SECRET_KEY"] = "YourStay"
-app.config["CORS_HEADERS"] = 'Content-Type'
+app.config["CORS_HEADERS"] = ['Content-Type, auth']
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+# app.config['JWT_ACCESS_COOKIE_PATH'] = '/recommnded'
+# app.config['JWT_COOKIE_SECURE'] = False 
+# app.config['JWT_COOKIE_CSRF_PROTECT'] = False
 # app.config['MONGO_DBNAME'] = 'NLP'
 
 mongo = PyMongo(app)
 bcrpyt = Bcrypt(app)
 jwt = JWTManager(app)
-CORS(app, resources={r'/*':{'origins':'*'}})
+cors = CORS(app, resources={r'/':{'origins':'http://localhost:5000'}}, support_credentials=True)
 
 db = mongo.db
 
-# def build_actual_response(response):
-#     response.headers.add("Access-Control-Allow-Origin", "*")
-#     return response
-
 @app.route('/api/v1/register', methods=['POST'])
-@cross_origin(origin='*')
+@cross_origin(origin='localhost', support_credentials=True)
 def register():
     user_id = request.form['userid']
     user_name = request.form['username']
@@ -56,9 +57,10 @@ def register():
         return jsonify(message='User Registered')
 
 
-@app.route('/api/v1/login', methods=['POST'])
-@cross_origin(origin='*')
+@app.route('/api/v1/login', methods=['POST', 'OPTIONS'])
+@cross_origin(origin='localhost', support_credentials=True)
 def login():
+
     if request.is_json:
         user_id = request.json['userid']
         password = request.json['password']
@@ -78,8 +80,13 @@ def login():
         
         if bcrypt.checkpw(password.encode('utf-8'), pwcheck):
             access_token = create_access_token(identity=id_val)
+            refresh_token = create_refresh_token(identity=id_val)
 
-            return jsonify(message="Logged In", access_token=access_token)
+            resp = jsonify(message="Logged In")
+            set_access_cookies(resp, access_token)
+            # set_refresh_cookies(resp, refresh_token)
+
+            return resp
 
         else:
             return jsonify(message="No verified email or password")
@@ -126,8 +133,9 @@ def recommend_hotel():
     weighted_scores = []
 
     for h in hotel_infos:
-        weighted = {}
-        weighted['name'] = h['hotelName']
+        weighted = h
+        del weighted['_id']
+        # weighted['hotelName'] = h['hotelName']
         weighted['score'] = (user_scores['cleanliness']*h['cleanliness'] + user_scores['position']*h['position'] + user_scores['convenience']*h['convenience'] + user_scores['kindness']*h['kindness']) / 4
         weighted_scores.append(weighted)
 
@@ -193,4 +201,4 @@ def get_review(hotelid):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0')
